@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Comment extends Model
 {
@@ -11,4 +12,14 @@ class Comment extends Model
         'author_id',
         'task_id',
     ];
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class);
+    }
 }

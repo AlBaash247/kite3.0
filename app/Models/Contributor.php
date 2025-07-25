@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Contributor extends Model
 {
@@ -12,23 +13,15 @@ class Contributor extends Model
         'is_editor',
     ];
 
-    public function user()
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'contributor_id');
+        return $this->belongsTo(User::class, 'contributor_id');
     }
 
-    public function project()
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
 
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
 }
