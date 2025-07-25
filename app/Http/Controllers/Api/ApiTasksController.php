@@ -15,22 +15,30 @@ class ApiTasksController extends Controller
     {
         $projectId = $request->input('project_id');
         $userId = $request->input('author_id');
+        
         if (!$projectId || !$userId) {
             return response()->json(['message' => 'project_id and author_id are required'], 400);
         }
+        
         $project = Project::find($projectId);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
         // Only project author or any contributor can list tasks
         $isContributor = Contributor::where('project_id', $projectId)
             ->where('contributor_id', $userId)
             ->exists();
+            
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['message' => 'Only the project author or a contributor can view tasks.'], 403);
         }
+        
         $limit = $request->input('limit', 10);
-        $tasks = Task::where('project_id', $projectId)->paginate($limit);
+        $tasks = Task::where('project_id', $projectId)
+            ->with(['author', 'project'])
+            ->paginate($limit);
+            
         return response()->json($tasks);
     }
 
@@ -38,21 +46,26 @@ class ApiTasksController extends Controller
     public function show($id)
     {
         $userId = request('author_id');
-        $task = Task::find($id);
+        $task = Task::with(['author', 'project', 'comments.author'])->find($id);
+        
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+        
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
         // Only project author or any contributor can view task
         $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
+            
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['message' => 'Only the project author or a contributor can view this task.'], 403);
         }
+        
         return response()->json($task);
     }
 
@@ -60,7 +73,6 @@ class ApiTasksController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'author_id' => 'required|exists:users,id',
             'project_id' => 'required|integer',
             'name' => 'required|string|max:255',
             'status' => 'required|string',
@@ -74,7 +86,8 @@ class ApiTasksController extends Controller
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
-        $userId = $validated['author_id'];
+        
+        $userId = $request->input('author_id');
         if ($project->author_id != $userId) {
             $isEditor = Contributor::where('project_id', $project->id)
                 ->where('contributor_id', $userId)
@@ -85,7 +98,9 @@ class ApiTasksController extends Controller
             }
         }
 
+        $validated['author_id'] = $userId;
         $task = Task::create($validated);
+        
         return response()->json($task, 201);
     }
 
@@ -96,9 +111,8 @@ class ApiTasksController extends Controller
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+        
         $validated = $request->validate([
-            'author_id' => 'sometimes|exists:users,id',
-            'project_id' => 'sometimes|integer',
             'name' => 'sometimes|string|max:255',
             'status' => 'sometimes|string',
             'importance' => 'sometimes|string',
@@ -106,13 +120,14 @@ class ApiTasksController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        // Authorization: Only project author or contributor with is_editor can edit
-        $userId = $validated['author_id'] ?? $task->author_id;
-        $projectId = $validated['project_id'] ?? $task->project_id;
-        $project = Project::find($projectId);
+        $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
+        $userId = $request->input('author_id');
+        
+        // Only project author or contributor with is_editor can edit tasks
         if ($project->author_id != $userId) {
             $isEditor = Contributor::where('project_id', $project->id)
                 ->where('contributor_id', $userId)
@@ -124,22 +139,26 @@ class ApiTasksController extends Controller
         }
 
         $task->update($validated);
+        
         return response()->json($task);
     }
 
     // Delete task
     public function destroy($id)
     {
+        $userId = request('author_id');
         $task = Task::find($id);
+        
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
-        // Authorization: Only project author or contributor with is_editor can delete
-        $userId = request('author_id', $task->author_id);
+        
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
+        // Only project author or contributor with is_editor can delete tasks
         if ($project->author_id != $userId) {
             $isEditor = Contributor::where('project_id', $project->id)
                 ->where('contributor_id', $userId)
@@ -149,7 +168,9 @@ class ApiTasksController extends Controller
                 return response()->json(['message' => 'Only the project author or an editor contributor can delete tasks.'], 403);
             }
         }
+        
         $task->delete();
+        
         return response()->json(['message' => 'Task deleted successfully']);
     }
 } 

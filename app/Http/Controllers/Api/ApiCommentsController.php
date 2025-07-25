@@ -16,25 +16,34 @@ class ApiCommentsController extends Controller
     {
         $taskId = $request->input('task_id');
         $userId = $request->input('author_id');
+        
         if (!$taskId || !$userId) {
             return response()->json(['message' => 'task_id and author_id are required'], 400);
         }
+        
         $task = Task::find($taskId);
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+        
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
         $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
+            
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['message' => 'Only the project author or a contributor can view comments.'], 403);
         }
+        
         $limit = $request->input('limit', 10);
-        $comments = Comment::where('task_id', $taskId)->paginate($limit);
+        $comments = Comment::where('task_id', $taskId)
+            ->with('author')
+            ->paginate($limit);
+            
         return response()->json($comments);
     }
 
@@ -42,24 +51,30 @@ class ApiCommentsController extends Controller
     public function show($id)
     {
         $userId = request('author_id');
-        $comment = Comment::find($id);
+        $comment = Comment::with(['author', 'task.project'])->find($id);
+        
         if (!$comment) {
             return response()->json(['message' => 'Comment not found'], 404);
         }
+        
         $task = Task::find($comment->task_id);
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+        
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
         $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
+            
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['message' => 'Only the project author or a contributor can view this comment.'], 403);
         }
+        
         return response()->json($comment);
     }
 
@@ -68,25 +83,31 @@ class ApiCommentsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string',
-            'author_id' => 'required|exists:users,id',
             'task_id' => 'required|exists:tasks,id',
         ]);
+        
         $task = Task::find($validated['task_id']);
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+        
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
-        $userId = $validated['author_id'];
+        
+        $userId = $request->input('author_id');
         $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
+            
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['message' => 'Only the project author or a contributor can create comments.'], 403);
         }
+        
+        $validated['author_id'] = $userId;
         $comment = Comment::create($validated);
+        
         return response()->json($comment, 201);
     }
 
@@ -97,51 +118,60 @@ class ApiCommentsController extends Controller
         if (!$comment) {
             return response()->json(['message' => 'Comment not found'], 404);
         }
-        $userId = $request->input('author_id');
-        if (!$userId) {
-            return response()->json(['message' => 'author_id is required'], 400);
-        }
+        
+        $validated = $request->validate([
+            'name' => 'required|string',
+        ]);
+        
         $task = Task::find($comment->task_id);
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+        
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
+        $userId = $request->input('author_id');
+        
+        // Only project author or comment author can edit
         if ($project->author_id != $userId && $comment->author_id != $userId) {
-            return response()->json(['message' => 'Only the project author or the comment author can update this comment.'], 403);
+            return response()->json(['message' => 'Only the project author or comment author can edit this comment.'], 403);
         }
-        $validated = $request->validate([
-            'name' => 'sometimes|string',
-        ]);
+        
         $comment->update($validated);
+        
         return response()->json($comment);
     }
 
     // Delete comment (project author or comment author)
     public function destroy($id)
     {
+        $userId = request('author_id');
         $comment = Comment::find($id);
+        
         if (!$comment) {
             return response()->json(['message' => 'Comment not found'], 404);
         }
-        $userId = request('author_id');
-        if (!$userId) {
-            return response()->json(['message' => 'author_id is required'], 400);
-        }
+        
         $task = Task::find($comment->task_id);
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
+        
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['message' => 'Project not found'], 404);
         }
+        
+        // Only project author or comment author can delete
         if ($project->author_id != $userId && $comment->author_id != $userId) {
-            return response()->json(['message' => 'Only the project author or the comment author can delete this comment.'], 403);
+            return response()->json(['message' => 'Only the project author or comment author can delete this comment.'], 403);
         }
+        
         $comment->delete();
+        
         return response()->json(['message' => 'Comment deleted successfully']);
     }
 } 
