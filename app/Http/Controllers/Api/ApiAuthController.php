@@ -11,7 +11,7 @@ class ApiAuthController extends Controller
 {
     public function ping()
     {
-        return response()->json(['message' => 'pong']);
+        return response()->json(['is_ok' => true, 'message' => 'pong']);
     }
 
     public function register(Request $request)
@@ -54,7 +54,7 @@ class ApiAuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json(['is_ok' => false, 'message' => 'Invalid credentials'], 401);
         }
 
         $token = $user->createToken('api_token')->plainTextToken;
@@ -68,7 +68,7 @@ class ApiAuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out successfully.']);
+        return response()->json(['is_ok' => true, 'message' => 'Logged out successfully.']);
     }
 
     public function sendResetLinkEmail(Request $request)
@@ -86,9 +86,9 @@ class ApiAuthController extends Controller
         );
 
         if ($status === Password::RESET_LINK_SENT) {
-            return response()->json(['message' => 'Password reset link sent.']);
+            return response()->json(['is_ok' => true, 'message' => 'Password reset link sent.']);
         }
 
-        return response()->json(['message' => 'Unable to send reset link.'], 500);
+        return response()->json(['is_ok' => false, 'message' => 'Unable to send reset link.'], 500);
     }
 }
