@@ -1,0 +1,12 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ApiCommentsController;
+
+Route::prefix('api/comments')->group(function () {
+    Route::get('/', [ApiCommentsController::class, 'index']); // List comments
+    Route::get('/{id}', [ApiCommentsController::class, 'show']); // View single comment
+    Route::post('/store', [ApiCommentsController::class, 'store']); // Create comment
+    Route::put('/update/{id}', [ApiCommentsController::class, 'update']); // Edit comment
+    Route::delete('/delete/{id}', [ApiCommentsController::class, 'destroy']); // Delete comment
+}); 
