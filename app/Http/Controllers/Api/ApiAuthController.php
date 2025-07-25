@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Validator;
 
 class ApiAuthController extends Controller
 {
+    public function ping()
+    {
+        return response()->json(['message' => 'pong']);
+    }
 
     public function register(Request $request)
     {

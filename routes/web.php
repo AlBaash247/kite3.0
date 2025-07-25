@@ -65,5 +65,8 @@ Route::prefix('comments')->middleware(['auth', 'verified'])->group(function () {
     Route::delete('/delete/{id}', [WebCommentsController::class, 'destroy'])->name('comments.destroy'); // Delete comment
 }); 
 
-
 require __DIR__.'/auth.php';
+require __DIR__.'/API/api_auth.php';
+require __DIR__.'/API/api_projects.php';
+require __DIR__.'/API/api_comments.php';
+require __DIR__.'/API/api_tasks.php';
