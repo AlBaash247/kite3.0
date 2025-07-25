@@ -16,4 +16,19 @@ class Contributor extends Model
     {
         return $this->belongsTo(\App\Models\User::class, 'contributor_id');
     }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
 }

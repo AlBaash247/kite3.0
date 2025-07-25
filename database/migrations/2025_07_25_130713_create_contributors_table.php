@@ -17,9 +17,6 @@ return new class extends Migration
             $table->unsignedBigInteger('contributor_id');
             $table->boolean('is_editor')->default(true);
             $table->timestamps();
-
-            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
-            $table->foreign('contributor_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
