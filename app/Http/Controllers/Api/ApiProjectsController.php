@@ -50,7 +50,7 @@ class ApiProjectsController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'author_id' => 'required|exists:users,id',
             'description' => 'nullable|string',
         ]);
@@ -73,7 +73,7 @@ class ApiProjectsController extends Controller
             return response()->json(['message' => 'Only the project author can update this project.'], 403);
         }
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
+            'name' => 'sometimes|string|max:255',
             'author_id' => 'sometimes|exists:users,id',
             'description' => 'nullable|string',
         ]);
