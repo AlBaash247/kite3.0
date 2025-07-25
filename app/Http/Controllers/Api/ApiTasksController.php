@@ -62,7 +62,7 @@ class ApiTasksController extends Controller
         $validated = $request->validate([
             'author_id' => 'required|exists:users,id',
             'project_id' => 'required|integer',
-            'title' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'status' => 'required|string',
             'importance' => 'required|string',
             'due_date' => 'nullable|date',
@@ -99,7 +99,7 @@ class ApiTasksController extends Controller
         $validated = $request->validate([
             'author_id' => 'sometimes|exists:users,id',
             'project_id' => 'sometimes|integer',
-            'title' => 'sometimes|string|max:255',
+            'name' => 'sometimes|string|max:255',
             'status' => 'sometimes|string',
             'importance' => 'sometimes|string',
             'due_date' => 'nullable|date',

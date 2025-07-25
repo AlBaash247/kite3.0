@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('name');
             $table->unsignedBigInteger('author_id');
             $table->unsignedBigInteger('project_id');
             $table->string('status');
@@ -21,9 +21,6 @@ return new class extends Migration
             $table->date('due_date')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
-
-            $table->foreign('author_id')->references('id')->on('users')->onDelete('cascade');
-            // You may want to add a foreign key for project_id if you have a projects table
         });
     }
 
