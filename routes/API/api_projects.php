@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiProjectsController;
 
-Route::prefix('api/projects')->group(function () {
+Route::prefix('projects')->middleware('auth:sanctum')->group(function () {
+    Route::get('/ping', [ApiProjectsController::class, 'ping']);
     Route::get('/', [ApiProjectsController::class, 'index']); // List projects
     Route::get('/{id}', [ApiProjectsController::class, 'show']); // View single project
     Route::post('/store', [ApiProjectsController::class, 'store']); // Create project

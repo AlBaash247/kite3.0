@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiTasksController;
 
-Route::prefix('api/tasks')->group(function () {
+Route::prefix('tasks')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [ApiTasksController::class, 'index']); // List tasks
     Route::get('/{id}', [ApiTasksController::class, 'show']); // View single task
     Route::post('/store', [ApiTasksController::class, 'store']); // Create task
