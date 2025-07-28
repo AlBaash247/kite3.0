@@ -10,6 +10,11 @@ use App\Models\Task;
 
 class ApiTasksController extends Controller
 {
+    public function ping()
+    {
+        return response()->json(['is_ok' => true, 'message' => 'pong']);
+    }
+
     // List tasks with pagination
     public function index(Request $request)
     {

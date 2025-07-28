@@ -11,6 +11,11 @@ use App\Models\Contributor;
 
 class ApiCommentsController extends Controller
 {
+    public function ping()
+    {
+        return response()->json(['is_ok' => true, 'message' => 'pong']);
+    }
+
     // List comments (project author or any contributor)
     public function index(Request $request)
     {

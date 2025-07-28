@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiCommentsController;
 
 Route::prefix('comments')->middleware('auth:sanctum')->group(function () {
+    Route::get('/ping', [ApiCommentsController::class, 'ping']);
     Route::get('/', [ApiCommentsController::class, 'index']); // List comments
     Route::get('/{id}', [ApiCommentsController::class, 'show']); // View single comment
     Route::post('/store', [ApiCommentsController::class, 'store']); // Create comment

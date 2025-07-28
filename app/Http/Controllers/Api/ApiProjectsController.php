@@ -10,6 +10,11 @@ use App\Models\User;
 
 class ApiProjectsController extends Controller
 {
+    public function ping()
+    {
+        return response()->json(['is_ok' => true, 'message' => 'pong']);
+    }
+
     // List projects with pagination
     public function index(Request $request)
     {
