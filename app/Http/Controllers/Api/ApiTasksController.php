@@ -44,7 +44,11 @@ class ApiTasksController extends Controller
             ->with(['author', 'project'])
             ->paginate($limit);
             
-        return response()->json($tasks);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Tasks fetched successfully',
+            'payload' => $tasks
+        ]);
     }
 
     // View single task
@@ -106,7 +110,11 @@ class ApiTasksController extends Controller
         $validated['author_id'] = $userId;
         $task = Task::create($validated);
         
-        return response()->json($task, 201);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Task created successfully',
+            'payload' => $task
+        ], 201);
     }
 
     // Edit task
@@ -145,7 +153,11 @@ class ApiTasksController extends Controller
 
         $task->update($validated);
         
-        return response()->json($task);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Task updated successfully',
+            'payload' => $task
+        ]);
     }
 
     // Delete task

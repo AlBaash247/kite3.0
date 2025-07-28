@@ -25,7 +25,7 @@ class ApiAuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['is_ok' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
         $user = User::create([
@@ -37,8 +37,12 @@ class ApiAuthController extends Controller
         $token = $user->createToken('api_token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
-            'token' => $token,
+            'is_ok' => true,
+            'message' => 'User registered successfully',
+            'payload' => [
+                'user' => $user,
+                'token' => $token,
+            ]
         ], 201);
     }
 
@@ -50,7 +54,7 @@ class ApiAuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['is_ok' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
         $user = User::where('email', $request->email)->first();
@@ -62,8 +66,12 @@ class ApiAuthController extends Controller
         $token = $user->createToken('api_token')->plainTextToken;
 
         return response()->json([
-            'user' => $user,
-            'token' => $token,
+            'is_ok' => true,
+            'message' => 'User logged in successfully',
+            'payload' => [
+                'user' => $user,
+                'token' => $token,
+            ]
         ]);
     }
 
@@ -80,7 +88,7 @@ class ApiAuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['is_ok' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
         $status = Password::sendResetLink(

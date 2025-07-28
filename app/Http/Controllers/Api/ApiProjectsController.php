@@ -18,10 +18,7 @@ class ApiProjectsController extends Controller
     // List projects with pagination
     public function index(Request $request)
     {
-        $userId = $request->input('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = $request->user()->id;
         
         // Only show projects where user is author or contributor
         $contributedProjectIds = Contributor::where('contributor_id', $userId)->pluck('project_id')->toArray();
@@ -30,16 +27,17 @@ class ApiProjectsController extends Controller
                   ->orWhereIn('id', $contributedProjectIds);
         })->with(['author', 'contributors.user'])->paginate($request->input('limit', 10));
         
-        return response()->json($projects);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Projects fetched successfully',
+            'payload' => $projects
+        ]);
     }
 
     // View single project
     public function show($id)
     {
-        $userId = request('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = request()->user()->id;
         
         $project = Project::with(['author', 'contributors.user', 'tasks'])->find($id);
         if (!$project) {
@@ -54,7 +52,11 @@ class ApiProjectsController extends Controller
             return response()->json(['is_ok' => false, 'message' => 'Only the project author or a contributor can view this project.'], 403);
         }
         
-        return response()->json($project);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Project fetched successfully',
+            'payload' => $project
+        ]);
     }
 
     // Create project
@@ -65,19 +67,20 @@ class ApiProjectsController extends Controller
             'description' => 'nullable|string',
         ]);
         
-        $validated['author_id'] = $request->input('author_id');
+        $validated['author_id'] = $request->user()->id;
         $project = Project::create($validated);
         
-        return response()->json($project, 201);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Project created successfully',
+            'payload' => $project
+        ], 201);
     }
 
     // Edit project
     public function update(Request $request, $id)
     {
-        $userId = $request->input('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = $request->user()->id;
         
         $project = Project::find($id);
         if (!$project) {
@@ -95,16 +98,17 @@ class ApiProjectsController extends Controller
         
         $project->update($validated);
         
-        return response()->json($project);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Project updated successfully',
+            'payload' => $project
+        ]);
     }
 
     // Delete project
     public function destroy($id)
     {
-        $userId = request('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = request()->user()->id;
         
         $project = Project::find($id);
         if (!$project) {
@@ -123,10 +127,7 @@ class ApiProjectsController extends Controller
     // Add contributor by email
     public function addContributor(Request $request, $project_id)
     {
-        $userId = $request->input('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = $request->user()->id;
         
         $project = Project::find($project_id);
         if (!$project) {
@@ -167,16 +168,17 @@ class ApiProjectsController extends Controller
             'is_editor' => $validated['is_editor'] ?? false,
         ]);
         
-        return response()->json($contributor, 201);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Contributor added successfully',
+            'payload' => $contributor
+        ], 201);
     }
 
     // List contributors
     public function listContributors($project_id)
     {
-        $userId = request('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = request()->user()->id;
         
         $project = Project::find($project_id);
         if (!$project) {
@@ -195,16 +197,17 @@ class ApiProjectsController extends Controller
             ->with('user')
             ->get();
             
-        return response()->json($contributors);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Contributors fetched successfully',
+            'payload' => $contributors
+        ]);
     }
 
     // Update contributor permission
     public function updateContributor(Request $request, $project_id, $contributor_id)
     {
-        $userId = $request->input('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = $request->user()->id;
         
         $project = Project::find($project_id);
         if (!$project) {
@@ -229,16 +232,17 @@ class ApiProjectsController extends Controller
         
         $contributor->update($validated);
         
-        return response()->json($contributor);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Contributor updated successfully',
+            'payload' => $contributor
+        ]);
     }
 
     // Remove contributor
     public function removeContributor($project_id, $contributor_id)
     {
-        $userId = request('author_id');
-        if (!$userId) {
-            return response()->json(['is_ok' => false, 'message' => 'author_id is required'], 400);
-        }
+        $userId = request()->user()->id;
         
         $project = Project::find($project_id);
         if (!$project) {

@@ -49,7 +49,11 @@ class ApiCommentsController extends Controller
             ->with('author')
             ->paginate($limit);
             
-        return response()->json($comments);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Comments fetched successfully',
+            'payload' => $comments
+        ]);
     }
 
     // View single comment (project author or any contributor)
@@ -80,7 +84,11 @@ class ApiCommentsController extends Controller
             return response()->json(['is_ok' => false, 'message' => 'Only the project author or a contributor can view this comment.'], 403);
         }
         
-        return response()->json($comment);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Comment fetched successfully',
+            'payload' => $comment
+        ]);
     }
 
     // Create comment (project author or any contributor)
@@ -113,7 +121,11 @@ class ApiCommentsController extends Controller
         $validated['author_id'] = $userId;
         $comment = Comment::create($validated);
         
-        return response()->json($comment, 201);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Comment created successfully',
+            'payload' => $comment
+        ], 201);
     }
 
     // Update comment (project author or comment author)
@@ -147,7 +159,11 @@ class ApiCommentsController extends Controller
         
         $comment->update($validated);
         
-        return response()->json($comment);
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Comment updated successfully',
+            'payload' => $comment
+        ]);
     }
 
     // Delete comment (project author or comment author)
