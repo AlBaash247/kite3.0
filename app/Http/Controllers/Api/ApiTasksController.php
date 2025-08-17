@@ -16,22 +16,21 @@ class ApiTasksController extends Controller
     }
 
     // List tasks with pagination
-    public function index(Request $request)
+    public function index(Request $request, $project_id)
     {
-        $projectId = $request->input('project_id');
         $userId = $request->user()->id;
 
-        if (!$projectId || !$userId) {
+        if (!$project_id || !$userId) {
             return response()->json(['is_ok' => false, 'message' => 'project_id and author_id are required'], 400);
         }
 
-        $project = Project::find($projectId);
+        $project = Project::find($project_id);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
 
         // Only project author or any contributor can list tasks
-        $isContributor = Contributor::where('project_id', $projectId)
+        $isContributor = Contributor::where('project_id', $project_id)
             ->where('contributor_id', $userId)
             ->exists();
 
@@ -40,7 +39,7 @@ class ApiTasksController extends Controller
         }
 
         $limit = $request->input('limit', 10);
-        $tasks = Task::where('project_id', $projectId)
+        $tasks = Task::where('project_id', $project_id)
             ->with(['author', 'project'])
             ->paginate($limit);
 
