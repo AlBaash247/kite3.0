@@ -17,38 +17,37 @@ class ApiCommentsController extends Controller
     }
 
     // List comments (project author or any contributor)
-    public function index(Request $request)
+    public function index(Request $request, $task_id)
     {
-        $taskId = $request->input('task_id');
-        $userId = $request->input('author_id');
-        
-        if (!$taskId || !$userId) {
+        $userId = $request->user()->id;
+
+        if (!$task_id || !$userId) {
             return response()->json(['is_ok' => false, 'message' => 'task_id and author_id are required'], 400);
         }
-        
-        $task = Task::find($taskId);
+
+        $task = Task::find($task_id);
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
         }
-        
+
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
-        
+
         $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
-            
+
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['is_ok' => false, 'message' => 'Only the project author or a contributor can view comments.'], 403);
         }
-        
+
         $limit = $request->input('limit', 10);
-        $comments = Comment::where('task_id', $taskId)
+        $comments = Comment::where('task_id', $task_id)
             ->with('author')
             ->paginate($limit);
-            
+
         return response()->json([
             'is_ok' => true,
             'message' => 'Comments fetched successfully',
@@ -61,29 +60,29 @@ class ApiCommentsController extends Controller
     {
         $userId = request('author_id');
         $comment = Comment::with(['author', 'task.project'])->find($id);
-        
+
         if (!$comment) {
             return response()->json(['is_ok' => false, 'message' => 'Comment not found'], 404);
         }
-        
+
         $task = Task::find($comment->task_id);
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
         }
-        
+
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
-        
+
         $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
-            
+
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['is_ok' => false, 'message' => 'Only the project author or a contributor can view this comment.'], 403);
         }
-        
+
         return response()->json([
             'is_ok' => true,
             'message' => 'Comment fetched successfully',
@@ -98,29 +97,29 @@ class ApiCommentsController extends Controller
             'name' => 'required|string',
             'task_id' => 'required|exists:tasks,id',
         ]);
-        
+
         $task = Task::find($validated['task_id']);
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
         }
-        
+
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
-        
-        $userId = $request->input('author_id');
+
+        $userId = $request->user()->id;
         $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
-            
+
         if ($project->author_id != $userId && !$isContributor) {
             return response()->json(['is_ok' => false, 'message' => 'Only the project author or a contributor can create comments.'], 403);
         }
-        
+
         $validated['author_id'] = $userId;
         $comment = Comment::create($validated);
-        
+
         return response()->json([
             'is_ok' => true,
             'message' => 'Comment created successfully',
@@ -135,30 +134,30 @@ class ApiCommentsController extends Controller
         if (!$comment) {
             return response()->json(['is_ok' => false, 'message' => 'Comment not found'], 404);
         }
-        
+
         $validated = $request->validate([
             'name' => 'required|string',
         ]);
-        
+
         $task = Task::find($comment->task_id);
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
         }
-        
+
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
-        
-        $userId = $request->input('author_id');
-        
+
+        $userId = $request->user()->id;
+
         // Only project author or comment author can edit
         if ($project->author_id != $userId && $comment->author_id != $userId) {
             return response()->json(['is_ok' => false, 'message' => 'Only the project author or comment author can edit this comment.'], 403);
         }
-        
+
         $comment->update($validated);
-        
+
         return response()->json([
             'is_ok' => true,
             'message' => 'Comment updated successfully',
@@ -171,28 +170,28 @@ class ApiCommentsController extends Controller
     {
         $userId = request('author_id');
         $comment = Comment::find($id);
-        
+
         if (!$comment) {
             return response()->json(['is_ok' => false, 'message' => 'Comment not found'], 404);
         }
-        
+
         $task = Task::find($comment->task_id);
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
         }
-        
+
         $project = Project::find($task->project_id);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
-        
+
         // Only project author or comment author can delete
         if ($project->author_id != $userId && $comment->author_id != $userId) {
             return response()->json(['is_ok' => false, 'message' => 'Only the project author or comment author can delete this comment.'], 403);
         }
-        
+
         $comment->delete();
-        
+
         return response()->json(['is_ok' => true, 'message' => 'Comment deleted successfully']);
     }
-} 
+}
