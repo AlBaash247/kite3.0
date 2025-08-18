@@ -100,7 +100,8 @@ class ApiCommentsController extends Controller
 
         $task = Task::find($validated['task_id']);
         if (!$task) {
-            return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
+            return response()->json(['is_ok' => false,
+            'message' => "Task not found, task_id: " . $validated['task_id']], 404);
         }
 
         $project = Project::find($task->project_id);

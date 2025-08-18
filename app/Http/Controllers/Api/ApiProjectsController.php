@@ -127,6 +127,12 @@ class ApiProjectsController extends Controller
     // Add contributor by email
     public function addContributor(Request $request)
     {
+        // $validated = $request->validate([
+        //     'project_id' => 'required|exists:contributors,project_id',
+        //     'email' => 'required|email|exists:users,email',
+        //     'is_editor' => 'boolean'
+        // ]);
+
         $userId = $request->user()->id;
 
         $project = Project::find($request->project_id);
@@ -138,13 +144,7 @@ class ApiProjectsController extends Controller
             return response()->json(['is_ok' => false, 'message' => 'Only the project author can add contributors.'], 403);
         }
 
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'email' => 'required|email|exists:users,email',
-            'is_editor' => 'boolean',
-        ]);
-
-        $contributorUser = User::where('email', $validated['email'])->first();
+        $contributorUser = User::where('email', $request->email)->first();
         if (!$contributorUser) {
             return response()->json(['is_ok' => false, 'message' => 'User not found'], 404);
         }
@@ -155,7 +155,7 @@ class ApiProjectsController extends Controller
         }
 
         // Check if already a contributor
-        $existingContributor = Contributor::where('project_id', $validated['project_id'])
+        $existingContributor = Contributor::where('project_id', $request->project_id)
             ->where('contributor_id', $contributorUser->id)
             ->first();
 
@@ -164,9 +164,9 @@ class ApiProjectsController extends Controller
         }
 
         $contributor = Contributor::create([
-            'project_id' => $validated['project_id'],
+            'project_id' => $request->project_id,
             'contributor_id' => $contributorUser->id,
-            'is_editor' => $validated['is_editor'] ?? false,
+            'is_editor' => $request->is_editor ?? false,
         ]);
 
         return response()->json([
@@ -208,22 +208,15 @@ class ApiProjectsController extends Controller
     // Update contributor permission
     public function updateContributor(Request $request)
     {
-
-        //validate request
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'contributor_id' => 'required|exists:contributors,contributor_id',
             'is_editor' => 'required|boolean',
         ]);
 
-        // if project_id and contributor_id and is_editor are not provided, return error
-        if (!$request->project_id || !$request->contributor_id || !$request->is_editor) {
-            return response()->json(['is_ok' => false, 'message' => 'Project ID, contributor ID and is_editor are required'], 400);
-        }
-
         $userId = $request->user()->id;
 
-        $project = Project::find($request->project_id);
+        $project = Project::find($validated['project_id']);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
@@ -232,15 +225,17 @@ class ApiProjectsController extends Controller
             return response()->json(['is_ok' => false, 'message' => 'Only the project author can update contributor permissions.'], 403);
         }
 
-        $contributor = Contributor::where('project_id', $request->project_id)
-            ->where('contributor_id', $request->contributor_id)
+        $contributor = Contributor::where('project_id', $validated['project_id'])
+            ->where('contributor_id', $validated['contributor_id'])
             ->first();
 
         if (!$contributor) {
             return response()->json(['is_ok' => false, 'message' => 'Contributor not found'], 404);
         }
 
-        $contributor->update($validated);
+        $contributor->update([
+            'is_editor' => $validated['is_editor']
+        ]);
 
         return response()->json([
             'is_ok' => true,
@@ -252,20 +247,14 @@ class ApiProjectsController extends Controller
     // Remove contributor
     public function removeContributor(Request $request)
     {
-        //validate request
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'contributor_id' => 'required|exists:contributors,contributor_id',
         ]);
 
-        // if project_id and contributor_id are not provided, return error
-        if (!$request->project_id || !$request->contributor_id) {
-            return response()->json(['is_ok' => false, 'message' => 'Project ID and contributor ID are required'], 400);
-        }
-
         $userId = request()->user()->id;
 
-        $project = Project::find($request->project_id);
+        $project = Project::find($validated['project_id']);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
@@ -274,8 +263,8 @@ class ApiProjectsController extends Controller
             return response()->json(['is_ok' => false, 'message' => 'Only the project author can remove contributors.'], 403);
         }
 
-        $contributor = Contributor::where('project_id', $request->project_id)
-            ->where('contributor_id', $request->contributor_id)
+        $contributor = Contributor::where('project_id', $validated['project_id'])
+            ->where('contributor_id', $validated['contributor_id'])
             ->first();
 
         if (!$contributor) {
