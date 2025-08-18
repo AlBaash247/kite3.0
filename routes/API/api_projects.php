@@ -12,8 +12,8 @@ Route::prefix('projects')->middleware('auth:sanctum')->group(function () {
     Route::delete('/delete/{id}', [ApiProjectsController::class, 'destroy']); // Delete project
 
     // Contributor management
-    Route::post('/{project_id}/contributors/add', [ApiProjectsController::class, 'addContributor']); // Add contributor by email
-    Route::get('/{project_id}/contributors', [ApiProjectsController::class, 'listContributors']); // List contributors
-    Route::put('/{project_id}/contributors/update/{contributor_id}', [ApiProjectsController::class, 'updateContributor']); // Update contributor permission
-    Route::delete('/{project_id}/contributors/delete/{contributor_id}', [ApiProjectsController::class, 'removeContributor']); // Remove contributor
-}); 
+    Route::post('/contributors/add', [ApiProjectsController::class, 'addContributor']); // Add contributor by email
+    Route::get('/contributors/{project_id}', [ApiProjectsController::class, 'listContributors']); // List contributors
+    Route::put('/contributors/update/', [ApiProjectsController::class, 'updateContributor']); // Update contributor permission
+    Route::delete('/contributors/delete', [ApiProjectsController::class, 'removeContributor']); // Remove contributor
+});
