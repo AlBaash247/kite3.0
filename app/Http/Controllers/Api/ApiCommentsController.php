@@ -58,7 +58,7 @@ class ApiCommentsController extends Controller
     // View single comment (project author or any contributor)
     public function show($id)
     {
-        $userId = request('author_id');
+        $userId = request()->user()->id;;
         $comment = Comment::with(['author', 'task.project'])->find($id);
 
         if (!$comment) {
@@ -97,6 +97,12 @@ class ApiCommentsController extends Controller
             'name' => 'required|string',
             'task_id' => 'required|exists:tasks,id',
         ]);
+
+
+
+        if (!$validated) {
+            return response()->json(['is_ok' => false, 'message' => 'Error: validation failed!'], 403);
+        }
 
         $task = Task::find($validated['task_id']);
         if (!$task) {
@@ -169,7 +175,7 @@ class ApiCommentsController extends Controller
     // Delete comment (project author or comment author)
     public function destroy($id)
     {
-        $userId = request('author_id');
+        $userId = request()->user()->id;;
         $comment = Comment::find($id);
 
         if (!$comment) {

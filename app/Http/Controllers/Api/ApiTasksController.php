@@ -53,7 +53,7 @@ class ApiTasksController extends Controller
     // View single task
     public function show($id)
     {
-        $userId = request('author_id');
+        $userId = request()->user()->id;;
         $task = Task::with(['author', 'project', 'comments.author'])->find($id);
 
 
