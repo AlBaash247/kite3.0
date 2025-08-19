@@ -8,6 +8,6 @@ Route::prefix('tasks')->middleware('auth:sanctum')->group(function () {
     Route::get('/{project_id}', [ApiTasksController::class, 'index']); // List tasks
     Route::get('/show/{id}', [ApiTasksController::class, 'show']); // View single task
     Route::post('/store', [ApiTasksController::class, 'store']); // Create task
-    Route::post('/update/{id}', [ApiTasksController::class, 'update']); // Edit task
-    Route::post('/delete/{id}', [ApiTasksController::class, 'destroy']); // Delete task
+    Route::post('/update', [ApiTasksController::class, 'update']); // Edit task
+    Route::delete('/delete/{id}', [ApiTasksController::class, 'destroy']); // Delete task
 });
