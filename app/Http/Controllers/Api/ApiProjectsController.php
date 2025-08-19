@@ -308,4 +308,33 @@ class ApiProjectsController extends Controller
 
         return response()->json(['is_ok' => true, 'message' => 'Contributor removed successfully']);
     }
+
+    // Remove contributor
+    public function removeContributorById($id)
+    {
+
+        $userId = request()->user()->id;
+        $contributor = Contributor::find($id);
+
+        if (!$contributor) {
+            return response()->json(['is_ok' => false, 'message' => 'Contributor not found'], 404);
+        }
+
+
+        $project = Project::find($contributor->project_id);
+        if (!$project) {
+            return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
+        }
+
+        // check if user is the author of the project
+        if ($project->author_id != $userId) {
+            return response()->json(['is_ok' => false, 'message' => 'Only the project author can remove contributors.'], 403);
+        }
+
+
+
+        $contributor->delete();
+
+        return response()->json(['is_ok' => true, 'message' => 'Contributor removed successfully']);
+    }
 }

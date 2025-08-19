@@ -8,6 +8,6 @@ Route::prefix('comments')->middleware('auth:sanctum')->group(function () {
     Route::get('/{task_id}', [ApiCommentsController::class, 'index']); // List comments
     Route::get('/show/{id}', [ApiCommentsController::class, 'show']); // View single comment
     Route::post('/store', [ApiCommentsController::class, 'store']); // Create comment
-    Route::post('/update/{id}', [ApiCommentsController::class, 'update']); // Edit comment
-    Route::post('/delete/{id}', [ApiCommentsController::class, 'destroy']); // Delete comment
+    Route::post('/update', [ApiCommentsController::class, 'update']); // Edit comment
+    Route::delete('/delete/{id}', [ApiCommentsController::class, 'destroy']); // Delete comment
 });

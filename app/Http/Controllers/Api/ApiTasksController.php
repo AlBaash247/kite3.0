@@ -118,9 +118,9 @@ class ApiTasksController extends Controller
     }
 
     // Edit task
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        $task = Task::find($id);
+        $task = Task::find($request->task_id);
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
         }
@@ -161,9 +161,9 @@ class ApiTasksController extends Controller
     }
 
     // Delete task
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $userId = request('author_id');
+        $userId = $request->user()->id;
         $task = Task::find($id);
 
         if (!$task) {
