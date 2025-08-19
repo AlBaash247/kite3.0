@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Comment;
 use Illuminate\Http\Request;
 use App\Models\Project;
 use App\Models\Contributor;
+use App\Models\Task;
 use App\Models\User;
+
 
 class ApiProjectsController extends Controller
 {
@@ -78,11 +81,19 @@ class ApiProjectsController extends Controller
     }
 
     // Edit project
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
+
+        $validated = $request->validate([
+            'project_id' => 'required|exists:projects,id',
+            'name' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+
         $userId = $request->user()->id;
 
-        $project = Project::find($id);
+        $project = Project::find($request->project_id);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
@@ -91,10 +102,7 @@ class ApiProjectsController extends Controller
             return response()->json(['is_ok' => false, 'message' => 'Only the project author can update this project.'], 403);
         }
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+
 
         $project->update($validated);
 
@@ -118,6 +126,12 @@ class ApiProjectsController extends Controller
         if ($project->author_id != $userId) {
             return response()->json(['is_ok' => false, 'message' => 'Only the project author can delete this project.'], 403);
         }
+
+
+        // delete all comments tasks and contributors related to the project
+        Comment::whereIn('task_id', Task::where('project_id', $id)->pluck('id'))->delete();
+        Task::where('project_id', $id)->delete();
+        Contributor::where('project_id', $id)->delete();
 
         $project->delete();
 
@@ -143,6 +157,7 @@ class ApiProjectsController extends Controller
         if ($project->author_id != $userId) {
             return response()->json(['is_ok' => false, 'message' => 'Only the project author can add contributors.'], 403);
         }
+
 
         $contributorUser = User::where('email', $request->email)->first();
         if (!$contributorUser) {
@@ -208,11 +223,24 @@ class ApiProjectsController extends Controller
     // Update contributor permission
     public function updateContributor(Request $request)
     {
+
+        // if contributor_id == user id exit with error
+        if ($request->contributor_id == $request->user()->id) {
+            return response()->json(['is_ok' => false, 'message' => 'Error: You provided your own id as the contributor id!'], 403);
+        }
+
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'contributor_id' => 'required|exists:contributors,contributor_id',
-            'is_editor' => 'required|boolean',
+            'is_editor' => 'required|in:true,false,0,1',
         ]);
+
+        if (!$validated) {
+            return response()->json(['is_ok' => false, 'message' => 'Error: validation failed!'], 403);
+        }
+
+        // Convert string boolean to actual boolean
+        $validated['is_editor'] = filter_var($validated['is_editor'], FILTER_VALIDATE_BOOLEAN);
 
         $userId = $request->user()->id;
 
@@ -247,10 +275,15 @@ class ApiProjectsController extends Controller
     // Remove contributor
     public function removeContributor(Request $request)
     {
+
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'contributor_id' => 'required|exists:contributors,contributor_id',
         ]);
+
+        if (!$validated) {
+            return response()->json(['is_ok' => false, 'message' => 'Error: validation failed!'], 403);
+        }
 
         $userId = request()->user()->id;
 
