@@ -16,21 +16,22 @@ class ApiTasksController extends Controller
     }
 
     // List tasks with pagination
-    public function index(Request $request, $project_id)
+    public function index(Request $request, Project $project)
     {
         $userId = $request->user()->id;
 
-        if (!$project_id || !$userId) {
+
+        if (!$project || !$userId) {
             return response()->json(['is_ok' => false, 'message' => 'project_id and author_id are required'], 400);
         }
 
-        $project = Project::find($project_id);
+
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
 
         // Only project author or any contributor can list tasks
-        $isContributor = Contributor::where('project_id', $project_id)
+        $isContributor = Contributor::where('project_id', $project->id)
             ->where('contributor_id', $userId)
             ->exists();
 
@@ -39,7 +40,7 @@ class ApiTasksController extends Controller
         }
 
         $limit = $request->input('limit', 10);
-        $tasks = Task::where('project_id', $project_id)
+        $tasks = Task::where('project_id', $project->id)
             ->with(['author', 'project'])
             ->paginate($limit);
 
@@ -51,11 +52,11 @@ class ApiTasksController extends Controller
     }
 
     // View single task
-    public function show($id)
+    public function show(Task $task)
     {
-        $userId = request()->user()->id;;
-        $task = Task::with(['author', 'project', 'comments.author'])->find($id);
+        $userId = request()->user()->id;
 
+        $task = $task::with(['author', 'project', 'comments.author']);
 
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
@@ -161,10 +162,10 @@ class ApiTasksController extends Controller
     }
 
     // Delete task
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, Task $task)
     {
         $userId = $request->user()->id;
-        $task = Task::find($id);
+
 
         if (!$task) {
             return response()->json(['is_ok' => false, 'message' => 'Task not found'], 404);
@@ -190,4 +191,6 @@ class ApiTasksController extends Controller
 
         return response()->json(['is_ok' => true, 'message' => 'Task deleted successfully']);
     }
+
+
 }

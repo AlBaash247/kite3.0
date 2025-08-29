@@ -67,4 +67,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Contributor::class, 'contributor_id');
     }
+
+    /**
+     * Get the task assignments for this user.
+     */
+    public function taskAssignments(): HasMany
+    {
+        return $this->hasMany(TaskAssignment::class, 'user_id');
+    }
+
+    /**
+     * Get the tasks assigned to this user.
+     */
+    public function assignedTasks(): HasMany
+    {
+        return $this->hasMany(TaskAssignment::class, 'user_id');
+    }
 }
