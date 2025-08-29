@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Models\Comment;
 use App\Models\Task;
 use App\Models\Project;
@@ -135,16 +136,24 @@ class ApiCommentsController extends Controller
     }
 
     // Update comment (project author or comment author)
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        $comment = Comment::find($id);
+        $validated = $request->validate([
+            'comment_id' => 'required|exists:comments,id',
+            'name' => 'required|string'
+        ]);
+
+        Log::info('Comment update validated data:', $validated);
+
+        if (!$validated) {
+            return response()->json(['is_ok' => false, 'message' => 'Error: validation failed!'], 403);
+        }
+
+
+        $comment = Comment::find($request->comment_id);
         if (!$comment) {
             return response()->json(['is_ok' => false, 'message' => 'Comment not found'], 404);
         }
-
-        $validated = $request->validate([
-            'name' => 'required|string',
-        ]);
 
         $task = Task::find($comment->task_id);
         if (!$task) {
