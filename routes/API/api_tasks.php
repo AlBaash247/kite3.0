@@ -13,6 +13,7 @@ Route::prefix('tasks')->middleware('auth:sanctum')->group(function () {
     Route::get('/show/{task}', [ApiTasksController::class, 'show']); // View single task
     Route::post('/store', [ApiTasksController::class, 'store']); // Create task
     Route::post('/update', [ApiTasksController::class, 'update']); // Edit task
+    Route::post('/search', [ApiTasksController::class, 'search']); // Search tasks
     Route::delete('/delete/{task}', [ApiTasksController::class, 'destroy']); // Delete task
 
     // User's assigned tasks

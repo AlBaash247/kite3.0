@@ -192,5 +192,92 @@ class ApiTasksController extends Controller
         return response()->json(['is_ok' => true, 'message' => 'Task deleted successfully']);
     }
 
+    // Search tasks
+    public function search(Request $request)
+    {
+        // user can search by name AND+OR range of dates AND+OR status AND+OR importance AND+OR Assignee
 
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'status' => 'nullable|string',
+            'importance' => 'nullable|string',
+            'date_start' => 'nullable|date',
+            'date_end' => 'nullable|date|after_or_equal:date_start',
+            'assignee_id' => 'nullable|integer|exists:users,id',
+            'project_id' => 'nullable|integer|exists:projects,id',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $query = Task::query();
+
+        // Search by task name (partial match)
+        if (!empty($validated['name'])) {
+            $query->where('name', 'like', '%' . $validated['name'] . '%');
+        }
+
+        // Search by status
+        if (!empty($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+
+        // Search by importance
+        if (!empty($validated['importance'])) {
+            $query->where('importance', $validated['importance']);
+        }
+
+        // Search by date range
+        if (!empty($validated['date_start'])) {
+            $query->where('due_date', '>=', $validated['date_start']);
+        }
+        if (!empty($validated['date_end'])) {
+            $query->where('due_date', '<=', $validated['date_end']);
+        }
+
+        // Search by assignee
+        if (!empty($validated['assignee_id'])) {
+            $query->whereHas('assignments', function ($subQuery) use ($validated) {
+                $subQuery->where('user_id', $validated['assignee_id']);
+            });
+        }
+
+        // Filter by project if specified
+        if (!empty($validated['project_id'])) {
+            $query->where('project_id', $validated['project_id']);
+        }
+
+        // Get the current user
+        $userId = $request->user()->id;
+
+        // Filter tasks based on user permissions
+        $query->where(function ($subQuery) use ($userId) {
+            // User can see tasks from projects they authored
+            $subQuery->whereHas('project', function ($projectQuery) use ($userId) {
+                $projectQuery->where('author_id', $userId);
+            })
+                // OR tasks from projects where they are contributors
+                ->orWhereHas('project.contributors', function ($contributorQuery) use ($userId) {
+                    $contributorQuery->where('contributor_id', $userId);
+                })
+                // OR tasks assigned to them
+                ->orWhereHas('assignments', function ($assignmentQuery) use ($userId) {
+                    $assignmentQuery->where('user_id', $userId);
+                });
+        });
+
+        // Include relationships for better response data
+        $query->with(['author', 'project', 'assignments.user']);
+
+        // Order by creation date (newest first)
+        $query->orderBy('created_at', 'desc');
+
+        // Paginate results
+        $perPage = $validated['per_page'] ?? 15;
+        $tasks = $query->paginate($perPage);
+
+        return response()->json([
+            'is_ok' => true,
+            'message' => 'Search completed successfully',
+            'payload' => $tasks
+        ]);
+    }
 }
