@@ -24,3 +24,4 @@ require __DIR__.'/API/api_projects.php';
 require __DIR__.'/API/api_comments.php';
 require __DIR__.'/API/api_tasks.php';
 require __DIR__.'/API/api_task_assignments.php';
+require __DIR__.'/API/api_metrics.php';
