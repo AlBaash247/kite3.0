@@ -25,9 +25,9 @@ class ApiProjectsController extends Controller
 
         // Only show projects where user is author or contributor
         $contributedProjectIds = Contributor::where('contributor_id', $userId)->pluck('project_id')->toArray();
-        $projects = Project::where(function($query) use ($userId, $contributedProjectIds) {
+        $projects = Project::where(function ($query) use ($userId, $contributedProjectIds) {
             $query->where('author_id', $userId)
-                  ->orWhereIn('id', $contributedProjectIds);
+                ->orWhereIn('id', $contributedProjectIds);
         })->with(['author', 'contributors.user'])->paginate($request->input('limit', 10));
 
         return response()->json([
@@ -141,15 +141,18 @@ class ApiProjectsController extends Controller
     // Add contributor by email
     public function addContributor(Request $request)
     {
-        // $validated = $request->validate([
-        //     'project_id' => 'required|exists:contributors,project_id',
-        //     'email' => 'required|email|exists:users,email',
-        //     'is_editor' => 'boolean'
-        // ]);
+        // dd($request->all());
+        $validated = $request->validate([
+            'project_id' => 'required|exists:contributors,project_id',
+            'email' => 'required|email|exists:users,email',
+            'is_editor' => 'nullable|in:true,false,0,1'
+        ]);
+
+        // dd($validated);
 
         $userId = $request->user()->id;
 
-        $project = Project::find($request->project_id);
+        $project = Project::find($validated['project_id']);
         if (!$project) {
             return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
         }
@@ -159,7 +162,7 @@ class ApiProjectsController extends Controller
         }
 
 
-        $contributorUser = User::where('email', $request->email)->first();
+        $contributorUser = User::where('email', $validated['email'])->first();
         if (!$contributorUser) {
             return response()->json(['is_ok' => false, 'message' => 'User not found'], 404);
         }
@@ -170,7 +173,7 @@ class ApiProjectsController extends Controller
         }
 
         // Check if already a contributor
-        $existingContributor = Contributor::where('project_id', $request->project_id)
+        $existingContributor = Contributor::where('project_id', $validated['project_id'])
             ->where('contributor_id', $contributorUser->id)
             ->first();
 
@@ -178,10 +181,16 @@ class ApiProjectsController extends Controller
             return response()->json(['is_ok' => false, 'message' => 'User is already a contributor'], 400);
         }
 
+        // Convert string boolean to actual boolean
+        $isEditor = false;
+        if (isset($validated['is_editor'])) {
+            $isEditor = filter_var($validated['is_editor'], FILTER_VALIDATE_BOOLEAN);
+        }
+
         $contributor = Contributor::create([
-            'project_id' => $request->project_id,
+            'project_id' => $validated['project_id'],
             'contributor_id' => $contributorUser->id,
-            'is_editor' => $request->is_editor ?? false,
+            'is_editor' => $isEditor,
         ]);
 
         return response()->json([
