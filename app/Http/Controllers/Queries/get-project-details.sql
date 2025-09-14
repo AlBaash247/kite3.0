@@ -6,6 +6,9 @@ SELECT * FROM comments where task_id in (SELECT id FROM tasks where project_id =
 SELECT * FROM contributors where project_id = 1;
 
 
+SELECT * from users;
+
+
 
 
 
