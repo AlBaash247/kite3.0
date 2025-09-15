@@ -143,7 +143,7 @@ class ApiProjectsController extends Controller
     {
         // dd($request->all());
         $validated = $request->validate([
-            'project_id' => 'required|exists:contributors,project_id',
+            'project_id' => 'required|exists:projects,id',
             'email' => 'required|email|exists:users,email',
             'is_editor' => 'nullable|in:true,false,0,1'
         ]);
