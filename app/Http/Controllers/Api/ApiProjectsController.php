@@ -9,7 +9,7 @@ use App\Models\Project;
 use App\Models\Contributor;
 use App\Models\Task;
 use App\Models\User;
-
+use Illuminate\Validation\ValidationException;
 
 class ApiProjectsController extends Controller
 {
@@ -141,31 +141,28 @@ class ApiProjectsController extends Controller
     // Add contributor by email
     public function addContributor(Request $request)
     {
-        // dd($request->all());
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'email' => 'required|email|exists:users,email',
-            'is_editor' => 'nullable|in:true,false,0,1'
-        ]);
+        try {
+            $validated = $request->validate([
+                'project_id' => 'required|exists:projects,id',
+                'email' => 'required|email|exists:users,email',
+                'is_editor' => 'nullable|in:true,false,0,1'
+            ]);
+            
+            $userId = $request->user()->id;
 
-        // dd($validated);
+            $project = Project::find($validated['project_id']);
+            if (!$project) {
+                return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
+            }
 
-        $userId = $request->user()->id;
+            if ($project->author_id != $userId) {
+                return response()->json(['is_ok' => false, 'message' => 'Only the project author can add contributors.'], 403);
+            }
 
-        $project = Project::find($validated['project_id']);
-        if (!$project) {
-            return response()->json(['is_ok' => false, 'message' => 'Project not found'], 404);
-        }
-
-        if ($project->author_id != $userId) {
-            return response()->json(['is_ok' => false, 'message' => 'Only the project author can add contributors.'], 403);
-        }
-
-
-        $contributorUser = User::where('email', $validated['email'])->first();
-        if (!$contributorUser) {
-            return response()->json(['is_ok' => false, 'message' => 'User not found'], 404);
-        }
+            $contributorUser = User::where('email', $validated['email'])->first();
+            if (!$contributorUser) {
+                return response()->json(['is_ok' => false, 'message' => 'User not found'], 404);
+            }
 
         // Check if trying to add self as contributor
         if ($contributorUser->id === $userId) {
@@ -198,6 +195,14 @@ class ApiProjectsController extends Controller
             'message' => 'Contributor added successfully',
             'payload' => $contributor
         ], 201);
+    }
+     catch (ValidationException $e) {
+            return response()->json([
+                'is_ok' => false, 
+                'message' => 'Error: validation failed!',
+                'errors' => $e->errors()
+            ], 422);
+        }
     }
 
     // List contributors
